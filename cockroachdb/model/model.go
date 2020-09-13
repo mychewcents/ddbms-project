@@ -1,4 +1,5 @@
 package model
+
 import "fmt"
 type NewOrderInput struct {
 	c_id, d_id, w_id int64

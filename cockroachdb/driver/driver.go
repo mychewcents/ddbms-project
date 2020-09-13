@@ -1,8 +1,8 @@
 package main
 import (
 	"fmt"
-	"cockroachdb/model"
-	"cockroachdb/executors"
+	"github.com/mychewcents/ddbms-project/cockroachdb/executors"
+	"github.com/mychewcents/ddbms-project/cockroachdb/model"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 package executors
 import (
 	"fmt"
-	"cockroachdb/model"
+	"github.com/mychewcents/ddbms-project/cockroachdb/model"
 )
 
 func NewOrderExecutor(input model.NewOrderInput)  {
