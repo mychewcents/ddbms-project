@@ -160,7 +160,7 @@ IMPORT INTO ORDER_LINE_ORIG (
   OL_SUPPLY_W_ID,
   OL_QUANTITY,
   OL_DIST_INFO
-) CSV DATA ('nodelocal://self/project-files/data-files/order-line.csv');
+) CSV DATA ('nodelocal://self/project-files/data-files/order-line.csv') WITH nullif='null';
 
 CREATE TABLE ITEM_ORIG (
   I_ID int PRIMARY KEY,
