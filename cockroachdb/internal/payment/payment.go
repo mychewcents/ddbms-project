@@ -25,31 +25,31 @@ func ProcessTransaction(db *sql.DB, customerWHId int, customerDistrictId int, cu
 	
 	// Execute atomically
 	err = crdb.ExecuteTx(context.Background(), db, nil, func(tx *sql.Tx) error {
-        if err := tx.QueryRow(updateDistrict).Scan(&dStreet1, &dStreet2, &dCity, &dState, &dZip); err != nil {
-        	return err
-        }
-        if err := tx.QueryRow(updateCustomer).Scan(&firstName, &middleName, &lastName, &cStreet1, &cStreet2, &cCity, &cState, &cZip
+		if err := tx.QueryRow(updateDistrict).Scan(&dStreet1, &dStreet2, &dCity, &dState, &dZip); err != nil {
+			return err
+		}
+		if err := tx.QueryRow(updateCustomer).Scan(&firstName, &middleName, &lastName, &cStreet1, &cStreet2, &cCity, &cState, &cZip
 		&cPhone, &cSince, &cCredit, &cCreditLimit, &cDiscount, &cBalance); err != nil {
-        	return err
+			return err
 		}
 
 		if err := tx.QueryRow(readWarehouse).Scan(&wStreet1, &wStreet2, &sCity, &wState, &wZip); err != nil {
 			return err
 		}
-    })
+	})
     
-    if err != nil {
-    	log.Fatalf("%v", err)
-    }
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 
-    output := fmt.SPrintf("Customer identifier: (%s, %s, %s)\n 
-    	Warehouse address: (%s, %s, %s, %s, %s)\n 
-    	District address: (%s, %s, %s, %s, %s)\n
-    	Payment: %f", 
-    	customerWHId, customerDistrictId, customerId,
-    	wStreet1, wStreet2, wCity, wState, wZip,
-    	dStreet1, dStreet2, dCity, dState, dZip,
-    	payment)
+	output := fmt.SPrintf("Customer identifier: (%s, %s, %s)\n 
+		Warehouse address: (%s, %s, %s, %s, %s)\n 
+		District address: (%s, %s, %s, %s, %s)\n
+		Payment: %f", 
+		customerWHId, customerDistrictId, customerId,
+		wStreet1, wStreet2, wCity, wState, wZip,
+		dStreet1, dStreet2, dCity, dState, dZip,
+		payment)
 
-    fmt.Println(output)
+	fmt.Println(output)
 }
