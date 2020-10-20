@@ -161,7 +161,7 @@ def run_transaction(conn, op, max_retries=3):
         raise ValueError(f"Transaction did not succeed after {max_retries} retries")
 
 if __name__ == "__main__":
-	conn = psycopg2.connect("postgresql://root@localhost:27000/defaultdb?sslmode=disable")
+	conn = psycopg2.connect("postgresql://root@192.168.48.179:27000/defaultdb?sslmode=disable")
 	logging.basicConfig(filename="init.log", level=logging.DEBUG)
 	createOrderLines(conn)
 
