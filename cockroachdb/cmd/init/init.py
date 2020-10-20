@@ -90,21 +90,21 @@ VALUES({},{},{},{},{},'{}',{},{},{},'{}');
 
 
 def createOrderLines(conn):
-	df = pd.read_csv("/home/aravind95/NUS/sem1/CS5424/project-files/project-files/data-files/district.csv")
+	df = pd.read_csv("/home/stuproj/cs4224m/downloads/project-files/data-files/district.csv")
 	with conn.cursor() as cur:
 		for ind, row in df.iterrows():
 			cur.execute(CREATE_ORDER_LINES.format(row[0], row[1]))
 	conn.commit()
 
 def createOrders(conn):
-	df = pd.read_csv("/home/aravind95/NUS/sem1/CS5424/project-files/project-files/data-files/district.csv")
+	df = pd.read_csv("/home/stuproj/cs4224m/downloads/project-files/data-files/district.csv")
 	with conn.cursor() as cur:
 		for ind, row in df.iterrows():
 			cur.execute(CREATE_ORDERS.format(row[0], row[1]))
 	conn.commit()
 
 def insertOrders(conn):
-	df = pd.read_csv("/home/aravind95/NUS/sem1/CS5424/project-files/project-files/data-files/order.csv")
+	df = pd.read_csv("/home/stuproj/cs4224m/downloads/project-files/data-files/order.csv")
 	cnt = 0
 	with conn.cursor() as cur:
 		for ind, row in df.iterrows():
@@ -115,7 +115,7 @@ def insertOrders(conn):
 	conn.commit()
 
 def insertOrderLines(conn):
-	df = pd.read_csv("/home/aravind95/NUS/sem1/CS5424/project-files/project-files/data-files/order-line.csv")
+	df = pd.read_csv("/home/stuproj/cs4224m/downloads/project-files/data-files/order-line.csv")
 	with conn.cursor() as cur:
 		cnt = 0
 		for ind, row in df.iterrows():
