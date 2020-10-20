@@ -187,8 +187,6 @@ DROP TABLE IF EXISTS STOCK_ORIG;
 CREATE TABLE IF NOT EXISTS STOCK_ORIG (
   S_W_ID int,
   S_I_ID int,
-  S_I_NAME string,
-  S_I_PRICE decimal(5,2),
   S_QUANTITY decimal(4,0),
   S_YTD decimal(8,2),
   S_ORDER_CNT int,

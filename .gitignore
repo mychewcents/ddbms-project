@@ -2,3 +2,5 @@
 cockroachdb/cmd/app/app*
 
 cockroachdb/temp
+
+**/*/cdbserv

@@ -10,7 +10,7 @@ import (
 
 // CreateConnection returns a DB connection object
 func CreateConnection() (*sql.DB, error) {
-	db, err := sql.Open("postgres", "postgres://root@localhost:30000/default?sslmode=disable")
+	db, err := sql.Open("postgres", "postgres://root@192.168.48.179:27000/defaultdb?sslmode=disable")
 	if err != nil {
 		log.Fatal("error connecting to the database: ", err)
 	}
