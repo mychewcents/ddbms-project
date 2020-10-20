@@ -6,7 +6,7 @@ import logging
 import math
 import pandas as pd
 
-CREATE_ORDERS = """CREATE TABLE IF NOT EXISTS ORDERS_ORIG_{}_{} (
+CREATE_ORDERS_ORIG = """CREATE TABLE IF NOT EXISTS ORDERS_ORIG_{}_{} (
 O_W_ID int,
 O_D_ID int,
 O_ID int,
@@ -20,7 +20,7 @@ CONSTRAINT FK_ORDERS FOREIGN KEY (O_W_ID, O_D_ID, O_C_ID) REFERENCES CUSTOMER_OR
 );
 """
 
-INSERT_ORDERS = """UPSERT INTO ORDERS_ORIG_{}_{} (O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D)
+INSERT_ORDERS_ORIG = """UPSERT INTO ORDERS_ORIG_{}_{} (O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D)
 VALUES({}, {}, {}, {}, {}, {}, {}, '{}')
 """
 
@@ -73,7 +73,7 @@ CREATE_ORDER_LINES = """CREATE TABLE IF NOT EXISTS ORDER_LINES_{}_{} (
 );
 """
 
-INSERT_ORDER_LINES_ORIG = """UPSERT INTO ORDER_LINES_{}_{} (
+INSERT_ORDER_LINES = """UPSERT INTO ORDER_LINES_{}_{} (
   OL_W_ID,
   OL_D_ID,
   OL_O_ID,
@@ -162,7 +162,7 @@ def run_transaction(conn, op, max_retries=3):
 
 if __name__ == "__main__":
 	conn = psycopg2.connect("postgresql://root@localhost:27000/defaultdb?sslmode=disable")
-	logging.basicConfig(filename=init.log, level=logging.DEBUG)
+	logging.basicConfig(filename="init.log", level=logging.DEBUG)
 	createOrderLines(conn)
 
 	try:
