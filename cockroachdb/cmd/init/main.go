@@ -80,7 +80,7 @@ func createOrderLinesTables(warehouses, districts int) {
 			OL_DIST_INFO char(24),
 			INDEX (OL_O_ID),
 			INDEX (OL_I_ID),
-			PRIMARY KEY (OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER),
+			PRIMARY KEY (OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER)
 		);
 		
 		INSERT INTO defaultdb.ORDER_LINE_WID_DID 
