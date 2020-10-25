@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"time"
 	"github.com/cockroachdb/cockroach-go/crdb"
 )
 
@@ -14,20 +13,17 @@ type districtOrder struct {
 }
 
 func ProcessTransaction(db *sql.DB, warehouseId int, carrierId int) {
-	start := time.Now()
 	orderQuery := "SELECT O_ID FROM ORDERS_%d_%d WHERE O_CARRIER_ID=0 ORDER BY O_ID LIMIT 1"
 	updateOrderQuery := "UPDATE ORDERS_%d_%d SET (O_CARRIER_ID, O_DELIVERY_D) = (%d, now()) WHERE O_W_ID=%d AND O_D_ID=%d AND O_ID=%d RETURNING O_C_ID, O_TOTAL_AMOUNT"
-	updateCustomerQuery := "UPDATE CUSTOMER SET (C_BALANCE, C_DELIVERY_CNT) = (C_BALANCE + %f, C_DELIVERY_CNT - 1) WHERE C_W_ID=%d AND C_D_ID=%d AND C_ID=%d"
+	updateCustomerQuery := "UPDATE CUSTOMER SET (C_BALANCE, C_DELIVERY_CNT) = (C_BALANCE + %f, C_DELIVERY_CNT + 1) WHERE C_W_ID=%d AND C_D_ID=%d AND C_ID=%d"
 	var orders []districtOrder
 	err := crdb.ExecuteTx(context.Background(), db, nil, func(tx *sql.Tx) error {
 		for district := 1; district <= 10; district++ {
-			var orderId sql.NullInt32
+			var orderId int
 			if err := tx.QueryRow(fmt.Sprintf(orderQuery, warehouseId, district)).Scan(&orderId); err != nil {
 				return err
 			}
-			if orderId.Valid {
-				orders = append(orders, districtOrder{district, int(orderId.Int32)})
-			}
+			orders = append(orders, districtOrder{district, orderId})
 		}
 		return nil
 	})
@@ -55,6 +51,4 @@ func ProcessTransaction(db *sql.DB, warehouseId int, carrierId int) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	elapsed := time.Since(start)
-	fmt.Printf("Time taken: %s", elapsed)
 }
