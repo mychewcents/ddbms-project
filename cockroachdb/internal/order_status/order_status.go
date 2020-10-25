@@ -83,4 +83,4 @@ func ProcessTransaction(db *sql.DB, warehouseId int, districtId int, customerId 
 	} else {
 		fmt.Println(fmt.Sprintf(output, first, middle, last, balance, lastOrderId, entryDate.String, "null"))
 	}
-} 
+}

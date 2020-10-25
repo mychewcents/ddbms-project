@@ -19,11 +19,13 @@ func ProcessTransaction(db *sql.DB, warehouseId int, carrierId int) {
 	var orders []districtOrder
 	err := crdb.ExecuteTx(context.Background(), db, nil, func(tx *sql.Tx) error {
 		for district := 1; district <= 10; district++ {
-			var orderId int
-			if err := tx.QueryRow(fmt.Sprintf(orderQuery, warehouseId, district)).Scan(&orderId); err != nil {
+			var orderId sql.NullInt32
+			if err := tx.QueryRow(fmt.Sprintf(orderQuery, warehouseId, district)).Scan(&orderId); err != sql.ErrNoRows {
 				return err
 			}
-			orders = append(orders, districtOrder{district, orderId})
+			if orderId.Valid {
+				orders = append(orders, districtOrder{district, int(orderId.Int32)})
+			}
 		}
 		return nil
 	})

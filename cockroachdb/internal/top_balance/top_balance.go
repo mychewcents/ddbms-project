@@ -15,7 +15,7 @@ type txnOutput struct {
 }
 func ProcessTransaction(db *sql.DB) {
 	// Index on C_BALANCE
-	customerQuery := "SELECT C_FIRST, C_MIDDLE, C_LAST, C_W_ID, C_D_ID, C_BALANCE FROM CUSTOMER ORDER BY C_BALANCE LIMIT 10";
+	customerQuery := "SELECT C_FIRST, C_MIDDLE, C_LAST, C_W_ID, C_D_ID, C_BALANCE FROM CUSTOMER ORDER BY C_BALANCE DESC LIMIT 10";
 	districtQuery := "SELECT D_NAME FROM DISTRICT WHERE D_W_ID=%d AND D_ID=%d"
 	warehouseQuery := "SELECT W_NAME FROM WAREHOUSE WHERE W_ID=%d"
 
