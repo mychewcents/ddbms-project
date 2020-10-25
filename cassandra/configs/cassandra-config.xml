@@ -1,0 +1,8 @@
+<CassandraConfig>
+    <Hosts>
+        <Host>127.0.0.1</Host>
+    </Hosts>
+    <Keyspace>cassandra</Keyspace>
+    <WriteConsistency>ONE</WriteConsistency>
+    <ReadConsistency>ONE</ReadConsistency>
+</CassandraConfig>

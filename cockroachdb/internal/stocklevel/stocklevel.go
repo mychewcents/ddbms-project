@@ -1,21 +1,31 @@
 package stocklevel
 
 import (
+	"bufio"
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 )
 
 // ProcessTransaction processes the Stock Level Transaction
-func ProcessTransaction(db *sql.DB, warehouseID, districtID, threshold, lastNOrders int) {
-	var totalItems int
-	var lastOrderID int
+func ProcessTransaction(db *sql.DB, scanner *bufio.Scanner, transactionArgs []string) {
+	warehouseID, _ := strconv.Atoi(transactionArgs[1])
+	districtID, _ := strconv.Atoi(transactionArgs[2])
+	threshold, _ := strconv.Atoi(transactionArgs[3])
+	lastNOrders, _ := strconv.Atoi(transactionArgs[4])
 
-	row := db.QueryRow(`SELECT d_next_o_id FROM district WHERE d_w_id=$1 AND d_id=$2`, warehouseID, districtID)
+	execute(db, warehouseID, districtID, threshold, lastNOrders)
+}
 
-	err := row.Scan(&lastOrderID)
-	if err != nil {
+func execute(db *sql.DB, warehouseID, districtID, threshold, lastNOrders int) {
+	var totalItems, lastOrderID int
+
+	row := db.QueryRow("SELECT d_next_o_id FROM district WHERE d_w_id=$1 AND d_id=$2", warehouseID, districtID)
+
+	if err := row.Scan(&lastOrderID); err != nil {
 		log.Fatalf("%v", err)
+		return
 	}
 
 	startOrderID := lastOrderID - lastNOrders
@@ -24,7 +34,7 @@ func ProcessTransaction(db *sql.DB, warehouseID, districtID, threshold, lastNOrd
 		SELECT COUNT(*) FROM Stock 
 		WHERE S_W_ID=%d 
 		AND S_QUANTITY < %d 
-		AND S_ID IN (
+		AND S_I_ID IN (
 			SELECT OL_I_ID FROM ORDER_LINE_%d_%d 
 			WHERE OL_O_ID < %d AND OL_O_ID >= %d
 		)`,
@@ -32,10 +42,16 @@ func ProcessTransaction(db *sql.DB, warehouseID, districtID, threshold, lastNOrd
 	)
 
 	row = db.QueryRow(sqlStatement)
-	err = row.Scan(&totalItems)
-	if err != nil {
+
+	if err := row.Scan(&totalItems); err != nil {
 		log.Fatalf("%v", err)
+		return
 	}
 
-	fmt.Println("Total Number of Items below threshold: ", totalItems, " , for Order IDs between ", lastOrderID-lastNOrders, " and ", lastOrderID)
+	printOutputState(totalItems, lastOrderID-lastNOrders, lastOrderID)
+
+}
+
+func printOutputState(totalItems, startOrderID, endOrderID int) {
+	fmt.Println(fmt.Sprintf("Total Number of Items below threshold: %d , for Order IDs between %d - %d", totalItems, startOrderID, endOrderID))
 }

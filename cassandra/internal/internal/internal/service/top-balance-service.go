@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/gocql/gocql"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
 	"io"
 )
@@ -14,7 +14,7 @@ type TopBalanceService interface {
 type topBalanceServiceImpl struct {
 }
 
-func NewTopBalanceService(cluster *gocql.ClusterConfig) TopBalanceService {
+func NewTopBalanceService(cassandraSession *common.CassandraSession) TopBalanceService {
 	return &topBalanceServiceImpl{}
 }
 

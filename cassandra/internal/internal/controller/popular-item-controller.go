@@ -1,9 +1,10 @@
 package controller
 
 import (
-	"bufio"
-	"github.com/gocql/gocql"
+	"fmt"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/handler"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/service"
 )
 
@@ -13,17 +14,26 @@ type PopularItemController interface {
 
 type popularItemControllerImpl struct {
 	s service.PopularItemService
-	r *bufio.Reader
 }
 
-func NewPopularItemController(cluster *gocql.ClusterConfig, reader *bufio.Reader) PopularItemController {
+func NewPopularItemController(cassandraSession *common.CassandraSession) PopularItemController {
 	return &popularItemControllerImpl{
-		s: service.NewPopularItemService(cluster),
-		r: reader,
+		s: service.NewPopularItemService(cassandraSession),
 	}
 }
 
-func (p *popularItemControllerImpl) HandleTransaction(i []string) {
+func (p *popularItemControllerImpl) HandleTransaction(cmd []string) {
+	request := makePopularItemRequest(cmd)
+	response, _ := p.s.ProcessPopularItemService(request)
+	printPopularItemResponse(response)
+}
+
+func makePopularItemRequest(cmd []string) *model.PopularItemRequest {
+	panic("implement me")
+}
+
+func printPopularItemResponse(r *model.PopularItemResponse) {
+	fmt.Println(r)
 }
 
 func (p *popularItemControllerImpl) Close() error {

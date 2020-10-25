@@ -6,3 +6,7 @@ type StockLevelRequest struct {
 	Threshold      int
 	NoOfLastOrders int
 }
+
+type StockLevelResponse struct {
+	Count int
+}

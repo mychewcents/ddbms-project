@@ -1,9 +1,10 @@
 package controller
 
 import (
-	"bufio"
-	"github.com/gocql/gocql"
+	"fmt"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/handler"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/service"
 )
 
@@ -13,18 +14,26 @@ type OrderStatusController interface {
 
 type orderStatusControllerImpl struct {
 	s service.OrderStatusService
-	r *bufio.Reader
 }
 
-func NewOrderStatusTransactionController(cluster *gocql.ClusterConfig, reader *bufio.Reader) OrderStatusController {
+func NewOrderStatusTransactionController(cassandraSession *common.CassandraSession) OrderStatusController {
 	return &orderStatusControllerImpl{
-		s: service.NewOrderStatusService(cluster),
-		r: reader,
+		s: service.NewOrderStatusService(cassandraSession),
 	}
 }
 
-func (n *orderStatusControllerImpl) HandleTransaction(i []string) {
+func (n *orderStatusControllerImpl) HandleTransaction(cmd []string) {
+	request := makeOrderStatusRequest(cmd)
+	response, _ := n.s.ProcessOrderStatusTransaction(request)
+	printOrderStatusResponse(response)
+}
 
+func makeOrderStatusRequest(cmd []string) *model.OrderStatusRequest {
+	panic("implement me")
+}
+
+func printOrderStatusResponse(r *model.OrderStatusResponse) {
+	fmt.Println(r)
 }
 
 func (n *orderStatusControllerImpl) Close() error {

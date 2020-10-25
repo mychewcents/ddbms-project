@@ -1,32 +1,28 @@
 package dao
 
 import (
-	"github.com/gocql/gocql"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/datamodel/table"
 	"log"
+	"strings"
 )
 
 type StockDao interface {
 	GetStockByKey(sWId int, sIId int, ch chan *table.StockTab)
-	UpdateStockDaoCAS(stOld *table.StockTab, quantity int, isRemote bool, ch chan bool)
+	GetItemCountWithLowStock(sWId int, sIIds []int, sQuantity int, cCh chan int)
+	UpdateStockCAS(stOld *table.StockTab, quantity int, isRemote bool, ch chan bool)
 }
 
 type stockDaoImpl struct {
-	cluster *gocql.ClusterConfig
+	cassandraSession *common.CassandraSession
 }
 
-func NewStockDao(cluster *gocql.ClusterConfig) StockDao {
-	return &stockDaoImpl{cluster: cluster}
+func NewStockDao(cassandraSession *common.CassandraSession) StockDao {
+	return &stockDaoImpl{cassandraSession: cassandraSession}
 }
 
 func (s *stockDaoImpl) GetStockByKey(sWId int, sIId int, ch chan *table.StockTab) {
-	session, err := s.cluster.CreateSession()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer session.Close()
-
-	query := session.Query("SELECT * "+
+	query := s.cassandraSession.ReadSession.Query("SELECT * "+
 		"from stock_tab "+
 		"where s_w_id=? AND s_i_id=?", sWId, sIId)
 
@@ -45,13 +41,26 @@ func (s *stockDaoImpl) GetStockByKey(sWId int, sIId int, ch chan *table.StockTab
 	ch <- st
 }
 
-func (s *stockDaoImpl) UpdateStockDaoCAS(stOld *table.StockTab, quantity int, isRemote bool, ch chan bool) {
-	session, err := s.cluster.CreateSession()
-	if err != nil {
-		log.Fatal(err)
+func (s *stockDaoImpl) GetItemCountWithLowStock(sWId int, sIIds []int, sQuantity int, cCh chan int) {
+	sIIdString := make([]string, len(sIIds))
+	for i, sIId := range sIIds {
+		sIIdString[i] = string(sIId)
 	}
-	defer session.Close()
 
+	query := s.cassandraSession.ReadSession.Query("SELECT count(*) "+
+		"from stock_tab "+
+		"where s_w_id=? AND s_i_id IN (?) AND s_quantity<?", sWId, strings.Join(sIIdString, ","), sQuantity)
+
+	var count int
+	if err := query.Scan(count); err != nil {
+		log.Fatalf("ERROR GetItemCountWithLowStock error in query execution. sWId=%v, sIId=%v, err=%v\n", sWId, strings.Join(sIIdString, ","), err)
+		return
+	}
+
+	cCh <- count
+}
+
+func (s *stockDaoImpl) UpdateStockCAS(stOld *table.StockTab, quantity int, isRemote bool, ch chan bool) {
 	sQuantity := stOld.SQuantity - quantity
 	if sQuantity < 10 {
 		sQuantity = sQuantity + 100
@@ -64,7 +73,7 @@ func (s *stockDaoImpl) UpdateStockDaoCAS(stOld *table.StockTab, quantity int, is
 		sRemoteCnt++
 	}
 
-	query := session.Query("UPDATE stock_tab "+
+	query := s.cassandraSession.WriteSession.Query("UPDATE stock_tab "+
 		"SET s_quantity=?, s_ytd=?, s_order_cnt=?, s_remote_cnt=? "+
 		"WHERE s_w_id=? and s_i_id=? "+
 		"IF s_quantity=? AND s_ytd=? AND s_order_cnt=? AND s_remote_cnt=?", sQuantity, sYtd, sOrderCnt, sRemoteCnt,
@@ -73,18 +82,18 @@ func (s *stockDaoImpl) UpdateStockDaoCAS(stOld *table.StockTab, quantity int, is
 
 	applied, err := query.ScanCAS(&sQuantity, &sYtd, &sOrderCnt, &sRemoteCnt)
 	if err != nil {
-		log.Fatalf("ERROR UpdateStockDaoCAS quering. err=%v\n", err)
+		log.Fatalf("ERROR UpdateStockCAS quering. err=%v\n", err)
 		return
 	}
 
 	if !applied {
-		log.Println("CAS Failure UpdateStockDaoCAS")
+		log.Println("CAS Failure UpdateStockCAS")
 		stOld.SQuantity = sQuantity
 		stOld.SYtd = sYtd
 		stOld.SOrderCnt = sOrderCnt
 		stOld.SRemoteCnt = sRemoteCnt
 
-		s.UpdateStockDaoCAS(stOld, quantity, isRemote, ch)
+		s.UpdateStockCAS(stOld, quantity, isRemote, ch)
 	} else {
 		ch <- true
 	}

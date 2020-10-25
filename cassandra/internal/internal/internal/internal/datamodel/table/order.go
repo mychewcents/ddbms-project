@@ -2,6 +2,7 @@ package table
 
 import (
 	"github.com/gocql/gocql"
+	"github.com/mitchellh/mapstructure"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/datamodel/udt"
 	"time"
 )
@@ -36,4 +37,14 @@ type OrderTab struct {
 	OOlTotalAmount float64    `mapstructure:"o_ol_total_amount"`
 	OAllLocal      bool       `mapstructure:"o_all_local"`
 	OEntryD        time.Time  `mapstructure:"o_entry_d"`
+}
+
+func MakeOrderTab(columns map[string]interface{}) (*OrderTab, error) {
+	var ot OrderTab
+
+	if err := mapstructure.Decode(columns, &ot); err != nil {
+		return nil, err
+	}
+
+	return &ot, nil
 }

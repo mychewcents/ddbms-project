@@ -2,6 +2,7 @@ package cdbconn
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	// Because we're using the Postgres Driver
@@ -9,8 +10,11 @@ import (
 )
 
 // CreateConnection returns a DB connection object
-func CreateConnection() (*sql.DB, error) {
-	db, err := sql.Open("postgres", "postgres://root@192.168.48.179:27000/defaultdb?sslmode=disable")
+func CreateConnection(connAddr string, port int, database, username string) (*sql.DB, error) {
+
+	connString := fmt.Sprintf("postgres://%s@%s:%d/%s?sslmode=disable", username, connAddr, port, database)
+
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Fatal("error connecting to the database: ", err)
 	}

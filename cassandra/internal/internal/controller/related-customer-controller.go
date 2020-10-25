@@ -1,9 +1,10 @@
 package controller
 
 import (
-	"bufio"
-	"github.com/gocql/gocql"
+	"fmt"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/handler"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/service"
 )
 
@@ -13,17 +14,26 @@ type RelatedCustomerController interface {
 
 type relatedCustomerControllerImpl struct {
 	s service.RelatedCustomerService
-	r *bufio.Reader
 }
 
-func NewRelatedCustomerController(cluster *gocql.ClusterConfig, reader *bufio.Reader) RelatedCustomerController {
+func NewRelatedCustomerController(cassandraSession *common.CassandraSession) RelatedCustomerController {
 	return &relatedCustomerControllerImpl{
-		s: service.NewRelatedCustomerService(cluster),
-		r: reader,
+		s: service.NewRelatedCustomerService(cassandraSession),
 	}
 }
 
-func (r *relatedCustomerControllerImpl) HandleTransaction(i []string) {
+func (r *relatedCustomerControllerImpl) HandleTransaction(cmd []string) {
+	request := makeRelatedCustomerRequest(cmd)
+	response, _ := r.s.ProcessRelatedCustomerTransaction(request)
+	printRelatedCustomerResponse(response)
+}
+
+func makeRelatedCustomerRequest(cmd []string) *model.RelatedCustomerRequest {
+	panic("implement me")
+}
+
+func printRelatedCustomerResponse(r *model.RelatedCustomerResponse) {
+	fmt.Println(r)
 }
 
 func (r *relatedCustomerControllerImpl) Close() error {

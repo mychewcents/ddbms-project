@@ -1,6 +1,9 @@
 package table
 
-import "github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/datamodel/udt"
+import (
+	"github.com/mitchellh/mapstructure"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/datamodel/udt"
+)
 
 const (
 	DWId     = "d_w_id"
@@ -22,4 +25,14 @@ type DistrictTab struct {
 	DAddress udt.Address `mapstructure:"d_address"`
 	DTax     float32     `mapstructure:"d_tax"`
 	DYtd     float64     `mapstructure:"d_ytd"`
+}
+
+func MakeDistrictTab(columns map[string]interface{}) (*DistrictTab, error) {
+	var dt DistrictTab
+
+	if err := mapstructure.Decode(columns, &dt); err != nil {
+		return nil, err
+	}
+
+	return &dt, nil
 }

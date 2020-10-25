@@ -1,10 +1,11 @@
 package controller
 
 import (
-	"bufio"
-	"github.com/gocql/gocql"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/handler"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/service"
+	"strconv"
 )
 
 type DeliveryController interface {
@@ -13,18 +14,27 @@ type DeliveryController interface {
 
 type deliveryControllerImpl struct {
 	s service.DeliveryService
-	r *bufio.Reader
 }
 
-func NewDeliveryTransactionController(cluster *gocql.ClusterConfig, reader *bufio.Reader) DeliveryController {
+func NewDeliveryTransactionController(cassandraSession *common.CassandraSession) DeliveryController {
 	return &deliveryControllerImpl{
-		s: service.NewDeliveryService(cluster),
-		r: reader,
+		s: service.NewDeliveryService(cassandraSession),
 	}
 }
 
-func (d *deliveryControllerImpl) HandleTransaction(i []string) {
+func (d *deliveryControllerImpl) HandleTransaction(cmd []string) {
+	request := makeDeliveryRequest(cmd)
+	d.s.ProcessDeliveryTransaction(request)
+}
 
+func makeDeliveryRequest(cmd []string) *model.DeliveryRequest {
+	wId, _ := strconv.Atoi(cmd[1])
+	carrierId, _ := strconv.Atoi(cmd[2])
+
+	return &model.DeliveryRequest{
+		WId:       wId,
+		CarrierId: carrierId,
+	}
 }
 
 func (d *deliveryControllerImpl) Close() error {

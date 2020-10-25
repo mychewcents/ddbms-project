@@ -1,6 +1,9 @@
 package table
 
-import "github.com/gocql/gocql"
+import (
+	"github.com/gocql/gocql"
+	"github.com/mitchellh/mapstructure"
+)
 
 const (
 	OlWId       = "ol_w_id"
@@ -30,4 +33,17 @@ type OrderLineTab struct {
 	OlAmount    float32    `mapstructure:"ol_amount"`
 	OlSupplyWId int        `mapstructure:"ol_supply_w_id"`
 	OlDistInfo  string     `mapstructure:"ol_dist_info"`
+}
+
+type OrderLineItemQuantityTab struct {
+}
+
+func MakeOrderLineTab(columns map[string]interface{}) (*OrderLineTab, error) {
+	var ot OrderLineTab
+
+	if err := mapstructure.Decode(columns, &ot); err != nil {
+		return nil, err
+	}
+
+	return &ot, nil
 }

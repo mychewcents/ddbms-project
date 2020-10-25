@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/gocql/gocql"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
 	"io"
 )
@@ -14,7 +14,7 @@ type RelatedCustomerService interface {
 type relatedCustomerServiceImpl struct {
 }
 
-func NewRelatedCustomerService(cluster *gocql.ClusterConfig) RelatedCustomerService {
+func NewRelatedCustomerService(cassandraSession *common.CassandraSession) RelatedCustomerService {
 	return &relatedCustomerServiceImpl{}
 }
 

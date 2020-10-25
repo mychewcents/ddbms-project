@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/gocql/gocql"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/dao"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/datamodel/table"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
@@ -23,12 +24,12 @@ type newOrderServiceImpl struct {
 	s  dao.StockDao
 }
 
-func NewNewOrderService(cluster *gocql.ClusterConfig) NewOrderService {
+func NewNewOrderService(cassandraSession *common.CassandraSession) NewOrderService {
 	return &newOrderServiceImpl{
-		c:  dao.NewCustomerDao(cluster),
-		o:  dao.NewOrderDao(cluster),
-		ol: dao.NewOrderLineDao(cluster),
-		s:  dao.NewStockDao(cluster),
+		c:  dao.NewCustomerDao(cassandraSession),
+		o:  dao.NewOrderDao(cassandraSession),
+		ol: dao.NewOrderLineDao(cassandraSession),
+		s:  dao.NewStockDao(cassandraSession),
 	}
 }
 
@@ -39,12 +40,23 @@ func (n *newOrderServiceImpl) ProcessNewOrderTransaction(request *model.NewOrder
 	orderTabList, totalAmount := makeOrderLineList(request, oId, stockTabMap)
 	orderTab := makeOrderTab(request, oId, customerTab, totalAmount)
 
-	n.setStockTabNewMap(request, stockTabMap)
-	n.ol.BatchInsertOrderLine(orderTabList)
-	n.o.InsertOrder(orderTab)
+	n.updateInParallel(request, stockTabMap, orderTabList, orderTab)
 
 	totalAmount = totalAmount * float64(1+customerTab.CDTax+customerTab.CWTax) * float64(1-customerTab.CDiscount)
-	return makeResponse(orderTab, orderTabList, customerTab, stockTabMap, totalAmount), nil
+	return makeNewOrderResponse(orderTab, orderTabList, customerTab, stockTabMap, totalAmount), nil
+}
+
+func (n *newOrderServiceImpl) updateInParallel(request *model.NewOrderRequest, stockTabMap map[int]map[int]*table.StockTab,
+	orderTabList []*table.OrderLineTab, orderTab *table.OrderTab) {
+
+	ch := make(chan bool, 3)
+	go n.setStockTabNewMap(request, stockTabMap, ch)
+	go n.ol.BatchInsertOrderLine(orderTabList, ch)
+	go n.o.InsertOrder(orderTab, ch)
+
+	<-ch
+	<-ch
+	<-ch
 }
 
 func makeOrderTab(request *model.NewOrderRequest, oId gocql.UUID, ct *table.CustomerTab, totalAmount float64) *table.OrderTab {
@@ -100,17 +112,19 @@ func makeOrderLineList(request *model.NewOrderRequest, oId gocql.UUID, stMap map
 	return otList, totalAmount
 }
 
-func (n *newOrderServiceImpl) setStockTabNewMap(request *model.NewOrderRequest, stMap map[int]map[int]*table.StockTab) {
+func (n *newOrderServiceImpl) setStockTabNewMap(request *model.NewOrderRequest, stMap map[int]map[int]*table.StockTab, chComplete chan bool) {
 	ch := make(chan bool, len(request.NewOrderLineList))
 
 	for _, ol := range request.NewOrderLineList {
 		st := stMap[ol.OlSupplyWId][ol.OlIId]
-		go n.s.UpdateStockDaoCAS(st, ol.OlQuantity, !(ol.OlSupplyWId == request.WId), ch)
+		go n.s.UpdateStockCAS(st, ol.OlQuantity, !(ol.OlSupplyWId == request.WId), ch)
 	}
 
 	for range request.NewOrderLineList {
 		<-ch
 	}
+
+	chComplete <- true
 }
 
 func (n *newOrderServiceImpl) getCustomerAndStockInfo(request *model.NewOrderRequest) (*table.CustomerTab, map[int]map[int]*table.StockTab) {
@@ -135,7 +149,7 @@ func (n *newOrderServiceImpl) getCustomerAndStockInfo(request *model.NewOrderReq
 	return <-customerTabCh, stockTabMap
 }
 
-func makeResponse(ot *table.OrderTab, oltList []*table.OrderLineTab, customerTab *table.CustomerTab,
+func makeNewOrderResponse(ot *table.OrderTab, oltList []*table.OrderLineTab, customerTab *table.CustomerTab,
 	stMap map[int]map[int]*table.StockTab, totalAmount float64) *model.NewOrderResponse {
 
 	oliList := make([]*model.NewOrderLineInfo, len(oltList))
@@ -171,7 +185,7 @@ func makeResponse(ot *table.OrderTab, oltList []*table.OrderLineTab, customerTab
 		OEntryD:              ot.OEntryD,
 		NoOfItems:            len(oltList),
 		TotalAmount:          totalAmount,
-		NewOrderLineInfoList: nil,
+		NewOrderLineInfoList: oliList,
 	}
 }
 

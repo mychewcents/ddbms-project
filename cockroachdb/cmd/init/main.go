@@ -13,7 +13,7 @@ var db *sql.DB
 
 func init() {
 	var err error
-	db, err = cdbconn.CreateConnection()
+	db, err = cdbconn.CreateConnection("localhost", "26257", "defaultdb", "root")
 	if err != nil {
 		panic(err)
 	}

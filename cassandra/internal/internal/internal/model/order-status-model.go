@@ -15,12 +15,12 @@ type OrderLineStatus struct {
 	OlIId       int
 	OlSupplyWId int
 	OlQuantity  int
-	OlAmount    float64
+	OlAmount    float32
 	OlDeliveryD time.Time
 }
 
 type OrderStatusResponse struct {
-	CName Name
+	CName *Name
 
 	OId        gocql.UUID
 	OEntryD    time.Time

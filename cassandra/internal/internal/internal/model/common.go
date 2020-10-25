@@ -1,5 +1,9 @@
 package model
 
+import (
+	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/datamodel/udt"
+)
+
 type Name struct {
 	FirstName  string
 	MiddleName string
@@ -12,4 +16,22 @@ type Address struct {
 	City    string
 	State   string
 	Zip     string
+}
+
+func NameModelFromUDT(n *udt.Name) *Name {
+	return &Name{
+		FirstName:  n.FirstName,
+		MiddleName: n.MiddleName,
+		LastName:   n.LastName,
+	}
+}
+
+func AddressModelFromUDT(a *udt.Address) *Address {
+	return &Address{
+		Street1: a.Street1,
+		Street2: a.Street2,
+		City:    a.City,
+		State:   a.State,
+		Zip:     a.Zip,
+	}
 }

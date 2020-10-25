@@ -1,13 +1,26 @@
 package payment
+
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
+
 	"github.com/cockroachdb/cockroach-go/crdb"
 )
 
-func ProcessTransaction(db *sql.DB, customerWHId int, customerDistrictId int, customerId int, payment float64) {
+// ProcessTransaction processes the Payment transaction
+func ProcessTransaction(db *sql.DB, scanner *bufio.Scanner, transactionArgs []string) {
+	warehouseID, _ := strconv.Atoi(transactionArgs[0])
+	districtID, _ := strconv.Atoi(transactionArgs[1])
+	customerID, _ := strconv.Atoi(transactionArgs[2])
+	paymentAmt, _ := strconv.ParseFloat(transactionArgs[3], 64)
+	execute(db, warehouseID, districtID, customerID, paymentAmt)
+}
+
+func execute(db *sql.DB, customerWHID int, customerDistrictID int, customerID int, payment float64) {
 	// QUERIES
 	updateDistrict := fmt.Sprintf(`UPDATE DISTRICT SET D_YTD = D_YTD + %f WHERE D_W_ID = %d AND D_ID = %d RETURNING D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP`, 
 	payment, customerWHId, customerDistrictId)
@@ -20,14 +33,14 @@ func ProcessTransaction(db *sql.DB, customerWHId int, customerDistrictId int, cu
 
 	var dStreet1, dStreet2, dCity, dState, dZip, firstName, middleName, lastName, cStreet1, cStreet2, cCity, cState, cZip,
 		cPhone, cSince, cCredit, cCreditLimit, cDiscount, cBalance, wStreet1, wStreet2, wCity, wState, wZip string
-	
+
 	// Execute atomically
 	err := crdb.ExecuteTx(context.Background(), db, nil, func(tx *sql.Tx) error {
 		if err := tx.QueryRow(updateDistrict).Scan(&dStreet1, &dStreet2, &dCity, &dState, &dZip); err != nil {
 			return err
 		}
 		if err := tx.QueryRow(updateCustomer).Scan(&firstName, &middleName, &lastName, &cStreet1, &cStreet2, &cCity, &cState, &cZip,
-		&cPhone, &cSince, &cCredit, &cCreditLimit, &cDiscount, &cBalance); err != nil {
+			&cPhone, &cSince, &cCredit, &cCreditLimit, &cDiscount, &cBalance); err != nil {
 			return err
 		}
 		if err := tx.QueryRow(readWarehouse).Scan(&wStreet1, &wStreet2, &wCity, &wState, &wZip); err != nil {
@@ -35,7 +48,7 @@ func ProcessTransaction(db *sql.DB, customerWHId int, customerDistrictId int, cu
 		}
 		return nil
 	})
-    
+
 	if err == sql.ErrNoRows {
 		fmt.Println("No records found!")
 		return
@@ -44,11 +57,11 @@ func ProcessTransaction(db *sql.DB, customerWHId int, customerDistrictId int, cu
 		log.Fatalf("%v", err)
 	}
 
-	output := fmt.Sprintf("Customer identifier: (%d, %d, %d)\nWarehouse address: (%s, %s, %s, %s, %s)\nDistrict address: (%s, %s, %s, %s, %s)\nPayment: %f", 
-	customerWHId, customerDistrictId, customerId,
-	wStreet1, wStreet2, wCity, wState, wZip,
-	dStreet1, dStreet2, dCity, dState, dZip,
-	payment)
+	output := fmt.Sprintf("Customer identifier: (%d, %d, %d)\nWarehouse address: (%s, %s, %s, %s, %s)\nDistrict address: (%s, %s, %s, %s, %s)\nPayment: %f",
+		customerWHID, customerDistrictID, customerID,
+		wStreet1, wStreet2, wCity, wState, wZip,
+		dStreet1, dStreet2, dCity, dState, dZip,
+		payment)
 
 	fmt.Println(output)
 }

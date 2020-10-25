@@ -3,7 +3,7 @@ package controller
 import (
 	"bufio"
 	"fmt"
-	"github.com/gocql/gocql"
+	"github.com/mychewcents/ddbms-project/cassandra/internal/common"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/handler"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/model"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/service"
@@ -20,9 +20,9 @@ type newOrderControllerImpl struct {
 	r *bufio.Reader
 }
 
-func NewNewOrderTransactionController(cluster *gocql.ClusterConfig, reader *bufio.Reader) NewOrderController {
+func NewNewOrderTransactionController(cassandraSession *common.CassandraSession, reader *bufio.Reader) NewOrderController {
 	return &newOrderControllerImpl{
-		s: service.NewNewOrderService(cluster),
+		s: service.NewNewOrderService(cassandraSession),
 		r: reader,
 	}
 }
@@ -30,20 +30,14 @@ func NewNewOrderTransactionController(cluster *gocql.ClusterConfig, reader *bufi
 func (n *newOrderControllerImpl) HandleTransaction(cmd []string) {
 	request := makeNewOrderRequest(cmd, n.r)
 	resp, _ := n.s.ProcessNewOrderTransaction(request)
-	fmt.Println(resp)
-}
-
-func (n *newOrderControllerImpl) Close() error {
-	panic("implement me")
+	printNewOrderResponse(resp)
 }
 
 func makeNewOrderRequest(cmd []string, r *bufio.Reader) *model.NewOrderRequest {
-	cIdString, wIdString, dIdString, mString := cmd[1], cmd[2], cmd[3], cmd[4]
-
-	cId, _ := strconv.Atoi(cIdString)
-	wId, _ := strconv.Atoi(wIdString)
-	dId, _ := strconv.Atoi(dIdString)
-	m, _ := strconv.Atoi(mString)
+	cId, _ := strconv.Atoi(cmd[1])
+	wId, _ := strconv.Atoi(cmd[2])
+	dId, _ := strconv.Atoi(cmd[3])
+	m, _ := strconv.Atoi(cmd[4])
 
 	return &model.NewOrderRequest{
 		WId:              wId,
@@ -60,10 +54,9 @@ func makeNewOrderLineList(m int, r *bufio.Reader) []*model.NewOrderLine {
 		text, _ := r.ReadString('\n')
 		orderLineSplit := strings.Split(strings.Trim(text, "\n"), ",")
 
-		olIIdString, olSupplyWIdString, olQuantityString := orderLineSplit[0], orderLineSplit[1], orderLineSplit[2]
-		olIId, _ := strconv.Atoi(olIIdString)
-		olSupplyWId, _ := strconv.Atoi(olSupplyWIdString)
-		olQuantity, _ := strconv.Atoi(olQuantityString)
+		olIId, _ := strconv.Atoi(orderLineSplit[0])
+		olSupplyWId, _ := strconv.Atoi(orderLineSplit[1])
+		olQuantity, _ := strconv.Atoi(orderLineSplit[2])
 
 		newOrderLine := &model.NewOrderLine{
 			OlIId:       olIId,
@@ -75,4 +68,12 @@ func makeNewOrderLineList(m int, r *bufio.Reader) []*model.NewOrderLine {
 	}
 
 	return newOrderLineList
+}
+
+func printNewOrderResponse(r *model.NewOrderResponse) {
+	fmt.Println(r)
+}
+
+func (n *newOrderControllerImpl) Close() error {
+	panic("implement me")
 }

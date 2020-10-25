@@ -1,6 +1,7 @@
 package table
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"github.com/mychewcents/ddbms-project/cassandra/internal/internal/internal/internal/datamodel/udt"
 )
 
@@ -22,4 +23,14 @@ type WarehouseTab struct {
 	WAddress udt.Address `mapstructure:"w_address"`
 	WTax     float32     `mapstructure:"w_tax"`
 	WYtd     float64     `mapstructure:"w_ytd"`
+}
+
+func MakeWarehouseTab(columns map[string]interface{}) (*WarehouseTab, error) {
+	var wt WarehouseTab
+
+	if err := mapstructure.Decode(columns, &wt); err != nil {
+		return nil, err
+	}
+
+	return &wt, nil
 }
